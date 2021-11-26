@@ -1,24 +1,67 @@
-import logo from './logo.svg';
+import React,{ useReducer, useEffect} from 'react';
+import Todos from './components/Todo/Todos'
 import './App.css';
+import AddToDo from './components/Todo/AddToDo';
+
+const initializer = () => JSON.parse(localStorage.getItem('items')) || {
+    name:'',
+    items: [],
+    completed: {}
+}
+
+const todoReducer = (prevState, action) => {
+  if(action.type === 'SAVE_TODO'){
+    return {
+      ...prevState,
+      name: action.value,
+      items: [...prevState.items, {
+        name: action.value,
+        id: Math.random().toString(),
+      }]
+    }
+  }
+  
+  if(action.type === 'COMPLETE_TODO'){
+    return {
+      ...prevState,
+      completed: {
+        ...prevState.completed,
+        [action.index]: !prevState.completed[action.index]
+      }
+    }
+  }
+
+  return {
+    name:'',
+    items: [],
+    completed: {}
+  }
+}
 
 function App() {
+    const [todoState, dispatchTodo] = useReducer(todoReducer, {
+      name:'',
+      items: [],
+      completed: {}
+    }, initializer);
+
+    useEffect(() => {
+      localStorage.setItem('items', JSON.stringify(todoState))
+    },[todoState])
+  
+  const saveTodo = (name) => {
+    dispatchTodo({type: 'SAVE_TODO', value: name})
+  }
+
+  const handleCheck = (index) => {
+    dispatchTodo({type:'COMPLETE_TODO', index: [index]})
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <AddToDo onSaveTodo={saveTodo}/>
+      <Todos todos={todoState} onHandleCheck={handleCheck}/>
+    </>
   );
 }
 
